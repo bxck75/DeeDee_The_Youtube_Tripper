@@ -1,5 +1,7 @@
 # ignore an entire directory
-model/*
-frames/*
-processed_frames/*
-downloads/*
+*.h5
+**/frames/*.jpg
+**/frames/*.png
+**/processed_frames/*.jpg
+**/processed_frames/*.png
+**/downloads/*.mp4
