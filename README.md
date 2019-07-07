@@ -25,3 +25,13 @@ usage example: ./trip_that_video.sh https://www.youtube.com/watch?v=IcQXy4YdFcM 
 <h1>To only deepdream one image</h1>
 usage example: python 2_deep_dreamv2.py in_image.jpg out_image.jpg octaves=1 30
 
+https://www.youtube.com/watch?v=Q6km-3ot8Qo
+https://www.youtube.com/watch?v=LDiiJ9tnlAU
+https://www.youtube.com/watch?v=Bopeq4am4uE
+https://www.youtube.com/watch?v=eZHHUunG94U
+https://www.youtube.com/watch?v=Uv9T_GbSwzc
+https://www.youtube.com/watch?v=OViRiAUuKxM
+https://www.youtube.com/watch?v=_27UxyeTxyI
+https://www.youtube.com/watch?v=Y-FC53SE0mA
+https://www.youtube.com/watch?v=iiOUHoK7zds
+https://www.youtube.com/watch?v=q-XnV1sRogg

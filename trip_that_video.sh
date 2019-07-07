@@ -1,5 +1,5 @@
 #! /bin/bash
-# ./trip_that_video.sh https://www.youtube.com/watch?v=qmsbP13xu6k flatbeat.mp4 242
+# ./trip_that_video.sh https://www.youtube.com/watch?v=qmsbP13xu6k flatbeat.mp4 134
 echo "Setting up shop"
 rip_url=$1
 filename=$2
@@ -7,22 +7,25 @@ download_folder='downloads/'
 name=`echo $2|awk -F '.' '{print $1}'`
 extension='jpg'
 quality=$3
+rip=$4
+if [ "${rip}" == "rip" ]; then
 
-echo "Making folders"
-mkdir -p ./frames/$name
-mkdir -p ./processed_frames/$name
-# delete old video 
-rm $download_folder$filename
+	echo "Making folders"
+	mkdir -p ./frames/$name
+	mkdir -p ./processed_frames/$name
+	# delete old video 
+	rm $download_folder$filename
 
-echo "Ripping Video from Youtube"
-youtube-dl -f $quality --output $download_folder$filename $rip_url
+	echo "Ripping Video from Youtube"
+	youtube-dl -f $quality --output $download_folder$filename $rip_url
 
-echo "Splitting the mp4 file to jpg frames"
-./1_movie2frames.sh ffmpeg $download_folder$filename ./frames/$name $extension
+	echo "Splitting the mp4 file to jpg frames"
+	./1_movie2frames.sh ffmpeg $download_folder$filename ./frames/$name $extension
+fi
 
 echo "DeepDreaming the frames (This is a long task! Get Cafe!)"
-for file in `ls frames/$name/`; do
-	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 4 10 0;
+for file in `ls frames/$name/ |head -n -147`; do
+	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 2 8 0;
 	# time python 2_deep_dreamv2.py test_done1.jpg test_done2.jpg 8 10 0
 	# time python DreamOn.py frames/$name/$file processed_frames/$name/$file 6 4 10;
 done

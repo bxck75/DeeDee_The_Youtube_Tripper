@@ -1,7 +1,7 @@
 from keras.applications import *
 import keras.applications
-Weights_File = 'model/resnetincp_weights.h5'
-Model_File = 'model/resnetincp_model.h5'
+Weights_File = 'NASNetMobile_weights.h5'
+Model_File = 'NASNetMobile_model.h5'
 
 print(dir(keras.applications))
 'DenseNet121', 'DenseNet169', 'DenseNet201', 'InceptionResNetV2', 'InceptionV3', 'MobileNet', 'NASNetLarge', 'NASNetMobile', 'ResNet50', 'VGG16', 'VGG19', 'Xception'

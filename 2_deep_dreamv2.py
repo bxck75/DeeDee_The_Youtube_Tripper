@@ -9,7 +9,7 @@
 # python deep_dreamv2.py <input image path> <output image path> <repeat> <iteration> <layer presets>
 # 
 # img='frames/00000001.jpg'; python 2_deep_dreamv2.py $img 'processed_'$img 1 4 0
-# 
+# img='frames/ghostmane/0000000148.jpg';name=`echo $img |awk -F '/' '{print $2"/"$3}'`; python 2_deep_dreamv2.py $img 'processed_frames/'$name 4 10 0
 # to do a folder of images 
 # 
 # for file in `ls frames/`; do python deep_dreamv2.py 'frames/'$file 'processed_frames/'$file 4 10; done
@@ -23,12 +23,17 @@ import warnings
 import imageio,collections
 import datetime,os,sys,glob
 import tensorflow as tf
+import keras.applications
+# print(dir(keras.applications))
 from keras import backend as K
 from keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
-from keras.applications import inception_v3,vgg16,vgg19,xception
+from keras.applications import *
 from tensorflow.python.client import device_lib
-
+from keras.applications.vgg16 import VGG16
+from keras.applications.vgg19 import VGG19
+from keras.applications.nasnet import NASNetMobile
+import keras.applications
 def get_available_gpus():
     from tensorflow.python.client import device_lib
     return device_lib.list_local_devices()
@@ -40,7 +45,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # set warning level
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
-    os.environ["PYTHONWARNINGS"] = "default" # Also affect subprocesses
+    # os.environ["PYTHONWARNINGS"] = "default" # Also affect subprocesses
     # print(dir(warnings.simplefilter))
 
 #input parsing
@@ -58,23 +63,30 @@ parser.add_argument('preset', metavar='pre', type=int,
 args = parser.parse_args()
 
 # You can tweak these setting to obtain other visual effects.
-step = 0.02 # Gradient ascent step size
+step = 0.01 # Gradient ascent step size
 num_octave = args.octaves  # Number of scales at which to run gradient ascent
-octave_scale = 1.4  # Size ratio between scales
+octave_scale = 1.6  # Size ratio between scales
 iterations = args.itterations  # Number of ascent steps per scale
 max_loss = 20 # Max loss limit
+#path settings
+preset_selector = int(args.preset)
+base_image_path = args.base_image_path
+out_image_path = args.out_image_path
 
-# Setting the presets
-settings=[]
-settings.append({'Xception': {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},},})
-settings.append({'features': {'input_1': 2,'block3_conv1': 0.7,'block3_conv2': 0.4,'block3_conv3': 0.1},})
-settings.append({'features': {'input_1': 2,'block3_conv1': 0.7,'block3_conv2': 0.4,'block3_conv3': 0.1},})
-settings.append({'features': {'input_1': 2,'block3_conv1': 0.7,'block3_conv2': 0.4,'block3_conv3': 0.1},})
-settings.append({'features': {'input_1': 2,'block3_conv1': 0.7,'block3_conv2': 0.4,'block3_conv3': 0.1},})
-settings.append({'features': {'input_1': 2,'block3_conv1': 0.7,'block3_conv2': 0.4,'block3_conv3': 0.1},})
+set={}
+set['InceptionV3'] =  {'features': {'input_1': 0.3,'concatenate_2': 0.5,'mixed3': 0.3,'activation_60': 1.8},}
+set['MobileNet'] =  {'features': {'input_1': 0.5,'conv_pw_13':2,'conv_dw_2_relu':0.4,'conv_pad_4':1.5},}
+set['Xception'] =  {'features': {'input_1': 0.3,'block5_sepconv3_act': 1.3,'block13_pool': 2.0,'add_11': 0.3,'block8_sepconv3_act': 0.4},}
+set['InceptionResNetV2'] =  {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},}
+set['VGG16'] =  {'features': {'input_1': 0.5,'conv_pad_5': 0.5,'block3_sepconv1': 0.3},}
+set['NasNetMobile'] =  {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},}
+set['ResNet50'] =  {'features': {'input_1': 0.1,'bn_conv1': 0.5 ,'res3b_branch2b': 0.5,'conv1_pad': 0.3},}
+set['VGG19'] =  {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},}
+set['DenseNet121'] =  {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},}
+set['DenseNet169'] =  {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},}
+set['DenseNet201'] =  {'features': {'input_1': 0.1,'block3_sepconv2': 0.5,'block3_sepconv1': 0.3},}
 
-#base settings do not change!!!!!!!!!
-debug = False
+ActiveModel= 'InceptionV3' #active model
 
 # proc/cpu limiter
 config = tf.ConfigProto()
@@ -82,13 +94,10 @@ config.intra_op_parallelism_threads = 16
 config.inter_op_parallelism_threads = 16
 sess= tf.Session(config=config)
 
-#path settings
-preset_selector = args.preset
-base_image_path = args.base_image_path
-out_image_path = args.out_image_path
-ActiveModel= 'Xception' #active model
 Weights_File = 'model/'+ActiveModel+'_weights.h5'
 Model_File = 'model/'+ActiveModel+'_model.h5'
+
+debug = True
 
 def preprocess_image(image_path):
     # Util function to open, resize and format pictures
@@ -130,7 +139,7 @@ def gradient_ascent(x, iterations, step, max_loss=None):
         x = x + step * grad_values
         end = timer()
         precision = 2
-        print( "Iterations took "+"{:.{}f}".format((end - start), precision ) +" seconds." )
+        print( "Time spend :"+"{:.{}f}".format((end - start), precision ) +" seconds." )
 
     return x
 
@@ -156,6 +165,9 @@ def load_saved_model(model_path,weights_path):
     model.load_weights(weights_path)
     return model
 
+
+
+
 class ModelSwitcher(object):
     def activate_model(self, argument):
         print('[ Loading ] : ' + ActiveModel + ' Model')
@@ -166,44 +178,35 @@ class ModelSwitcher(object):
         # Call the method as we return it
         return method()
  
+    print(set[ActiveModel]['features'])
     def Load_Xception(self):
-        return xception.Xception(weights='imagenet',include_top=False),settings[preset_selector][ActiveModel]
+        return xception.Xception(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_VGG16(self):
-        model = vgg16.VGG16(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return VGG16(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_VGG19(self):
-        model = vgg19.VGG19(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return VGG19(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_MobileNet(self):
-        model = mobilenet.MobileNet(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return mobilenet.MobileNet(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_NasNetMobile(self):
-        model = nasnetmobile.NASNetMobile(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return NASNetMobile(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_InceptionResNetV2(self):
-        model = inceptionresnetv2.InceptionResNetV2(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return inceptionresnetv2.InceptionResNetV2(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_ResNet50(self):
-        model = resnet50.ResNet50(weights='imagenet',include_top=False)
-        return model,selected_settings
-    def Load_Inceptionv3(self):
-        model = inception_v3.Inceptionv3(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return resnet50.ResNet50(weights='imagenet',include_top=False),set[ActiveModel]
+    def Load_InceptionV3(self):
+        return inception_v3.InceptionV3(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_DenseNet121(self):
-        model = densenet121.DenseNet121(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return densenet121.DenseNet121(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_DenseNet169(self):
-        model = densenet169.DenseNet169(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return densenet169.DenseNet169(weights='imagenet',include_top=False),set[ActiveModel]
     def Load_DenseNet201(self):
-        model = densenet201.DenseNet201(weights='imagenet',include_top=False)
-        return model,selected_settings
+        return densenet201.DenseNet201(weights='imagenet',include_top=False),set[ActiveModel]
     def get_settings(self):
-        return settings[preset_selector][ActiveModel]
+        return set[ActiveModel]
 
 K.set_learning_phase(0)
 # Auto choose Saved or Loaded Model/Weights
-if (os.path.exists(Model_File) and os.path.exists(Weights_File)):
+if (os.path.exists(Model_File) and os.path.exists(Weights_File)) :
     print('Loading saved model and weights')
     model = load_saved_model(Model_File,Weights_File)
     a=ModelSwitcher()
@@ -215,7 +218,7 @@ else:
     a=ModelSwitcher()
     model,selected_model_settings = a.activate_model(ActiveModel)                
     # save own copy
-    print('[ Saving ] : ' + ActiveModel)
+    print('[ Saving Model] : ' + ActiveModel)
     model.save(Model_File)
 
 dream = model.input
@@ -226,10 +229,12 @@ layer_dict = dict([(layer.name, layer) for layer in model.layers])
 
 # Tensor overview when debug=True
 if debug:
+    print(dir(keras.applications))
     layer_dict_sorted = collections.OrderedDict(layer_dict)
     for tensor in layer_dict_sorted:
         print(tensor)
 
+print(selected_model_settings['features'])
 # Define the loss.
 loss = K.variable(0.)
 for layer_name in selected_model_settings['features']:
