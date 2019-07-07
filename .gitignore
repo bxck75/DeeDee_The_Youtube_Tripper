@@ -1,2 +1,5 @@
 # ignore an entire directory
 model/*
+frames/*
+processed_frames/*
+downloads/*
