@@ -1,4 +1,5 @@
 #! /bin/bash
+# ./trip_that_video.sh https://www.youtube.com/watch?v=qmsbP13xu6k flatbeat.mp4 242
 echo "Setting up shop"
 rip_url=$1
 filename=$2
@@ -17,14 +18,14 @@ quality=$3
 
 	echo "Ripping Video from Youtube"
 	youtube-dl -f $quality --output $download_folder$filename $rip_url
-# fi
+# # fi
 
 echo "Splitting to frames"
 ./1_movie2frames.sh ffmpeg $download_folder$filename ./frames/$name $extension
 
 echo "Tripping the frames(Long Job!)"
 for file in `ls frames/$name/`; do
-	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 4 8;
+	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 2 10;
 done
 
 echo "Stitching the frames back to a mp4 with sound of the original"

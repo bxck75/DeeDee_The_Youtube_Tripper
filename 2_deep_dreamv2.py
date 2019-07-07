@@ -53,38 +53,36 @@ parser.add_argument('out_image_path', metavar='out', type=str,
 parser.add_argument('octaves', metavar='oct', type=int,
                     help='octave count',default=4)
 parser.add_argument('itterations', metavar='iter', type=int,
-                    help='itterations per octave',default=5)
+                    help='itterations per octave',default=10)
 args = parser.parse_args()
 
 # set dream hyper vars
 step = 0.02  # Gradient ascent step size
 num_octave = args.octaves  # Number of scales at which to run gradient ascent
-octave_scale = 1.4  # Size ratio between scales
+octave_scale = 1.6  # Size ratio between scales
 iterations = args.itterations  # Number of ascent steps per scale
 max_loss = 10
 # You can tweak these setting to obtain other visual effects.
 settings = {
     'features': {
-        'mixed10': 0.2,
-        'average_pooling2d_1': 0.8,
-        # 'mixed3': 0.1,
-        # 'mixed2': 0.6,
-        # 'mixed4': 2.5,
+        'input_1': 0.6,
+        'block4_conv3': 0.3,
+        'block2_conv1': 0.2,
+        'block5_conv2': 1.2,
     },
 }
-
 
 
 #base settings do not change!!!!!!!!!
 base_image_path = args.base_image_path
 out_image_path = args.out_image_path
-Weights_File = 'model/custom_inception_weights.h5'
-Model_File = 'model/custom_inception_model.h5'
+Weights_File = 'model/vgg16_weights.h5'
+Model_File = 'model/vgg16_model.h5'
 
 # proc/cpu limiter
 config = tf.ConfigProto()
-config.intra_op_parallelism_threads = 15
-config.inter_op_parallelism_threads = 15
+config.intra_op_parallelism_threads = 16
+config.inter_op_parallelism_threads = 16
 sess= tf.Session(config=config)
 
 def preprocess_image(image_path):
@@ -127,20 +125,19 @@ else:
     # The model will be loaded with pre-trained ImageNet weights.
     model = inception_v3.InceptionV3(weights='imagenet',include_top=False)        
     # save own copy
+    print('Save inception_v3 Model')
     model.save(Model_File)
-    # #save weights
-    model.save_weights(Weights_File)
 
 dream = model.input
 print('Model loaded.')
 
 # Get the symbolic outputs of each "key" layer (we gave them unique names).
 layer_dict = dict([(layer.name, layer) for layer in model.layers])
-import collections
+
+# for aap in layer_dict:
+    # print(aap)
 
 # sorted_dict = collections.OrderedDict(layer_dict)
-# for aap in sorted_dict:
-    # print(aap)
 
 # Define the loss.
 loss = K.variable(0.)
@@ -187,11 +184,17 @@ def resize_img(img, size):
 
 def gradient_ascent(x, iterations, step, max_loss=None):
     for i in range(iterations):
+        from timeit import default_timer as timer
+
+        start = timer()
+        # ...
         loss_value, grad_values = eval_loss_and_grads(x)
         if max_loss is not None and loss_value > max_loss:
             break
         print('..Loss value at', i, ':', loss_value)
         x = x + step * grad_values
+        end = timer()
+        print(end - start)
     return x
 
 def save_img(img, fname):
@@ -244,11 +247,36 @@ for shape in successive_shapes:
     img = img + lost_detail
     shrunk_original_img = resize_img(original_img, shape)
     timer=timer + 1
+# #save weights
+print('Save inception_v3 Weights')
+model.save_weights(Weights_File)
 print(out_image_path)
 save_img(img, fname=out_image_path)
 
 # Cleans up session
 sess.close()
+# Vgg16 LAYERS
+# input_1
+# block1_conv1
+# block1_conv2
+# block1_pool
+# block2_conv1
+# block2_conv2
+# block2_pool
+# block3_conv1
+# block3_conv2
+# block3_conv3
+# block3_pool
+# block4_conv1
+# block4_conv2
+# block4_conv3
+# block4_pool
+# block5_conv1
+# block5_conv2
+# block5_conv3
+# block5_pool
+
+# Inceptionv3 LAYERS
 # input_1
 # conv2d_1
 # batch_normalization_1
