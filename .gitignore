@@ -1,7 +1,4 @@
-# ignore an entire directory
 *.h5
-*.jpg
-*.png
 *.jpg
 *.png
 *.mp4
