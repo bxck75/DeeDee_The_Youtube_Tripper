@@ -1,7 +1,7 @@
 # ignore an entire directory
 *.h5
-**/frames/*.jpg
-**/frames/*.png
-**/processed_frames/*.jpg
-**/processed_frames/*.png
-**/downloads/*.mp4
+*.jpg
+*.png
+*.jpg
+*.png
+*.mp4
