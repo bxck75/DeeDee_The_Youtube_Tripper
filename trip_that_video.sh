@@ -13,14 +13,14 @@ quality=$3
 	mkdir -p ./frames/$name
 	mkdir -p ./processed_frames/$name
 	# delete old video 
-	# rm $download_folder$filename
+	rm $download_folder$filename
 
-# 	echo "Ripping Video from Youtube"
-# 	youtube-dl -f $quality --output $download_folder$filename $rip_url
-# # fi
+	echo "Ripping Video from Youtube"
+	youtube-dl -f $quality --output $download_folder$filename $rip_url
+# fi
 
-# echo "Splitting to frames"
-# ./1_movie2frames.sh ffmpeg $download_folder$filename ./frames/$name $extension
+echo "Splitting to frames"
+./1_movie2frames.sh ffmpeg $download_folder$filename ./frames/$name $extension
 
 echo "Tripping the frames(Long Job!)"
 for file in `ls frames/$name/`; do
