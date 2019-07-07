@@ -59,17 +59,17 @@ args = parser.parse_args()
 # set dream hyper vars
 step = 0.03  # Gradient ascent step size
 num_octave = args.octaves  # Number of scales at which to run gradient ascent
-octave_scale = 0.2  # Size ratio between scales
+octave_scale = 1.5  # Size ratio between scales
 iterations = args.itterations  # Number of ascent steps per scale
 max_loss = 10
 # You can tweak these setting to obtain other visual effects.
 settings = {
     'features': {
-        'mixed10': 0.2,
-        'average_pooling2d_1': 0.1,
-        'mixed3': 0.1,
-        'mixed2': 0.6,
-        'mixed4': 2.5,
+        # 'mixed10': 0.2,
+        'average_pooling2d_1': 0.8,
+        # 'mixed3': 0.1,
+        # 'mixed2': 0.6,
+        # 'mixed4': 2.5,
     },
 }
 

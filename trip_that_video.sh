@@ -24,7 +24,7 @@ quality=$3
 
 echo "Tripping the frames(Long Job!)"
 for file in `ls frames/$name/`; do
-	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 3 8;
+	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 4 8;
 done
 
 echo "Stitching the frames back to a mp4 with sound of the original"

@@ -1,3 +1,4 @@
+# DeeDee_The_Youtube_Tripper
 <h1>Trip that video</h1>
 usage example: ./trip_that_video.sh https://www.youtube.com/watch?v=IcQXy4YdFcM ORBITAL_THE_BOX.mp4 133
 
@@ -23,5 +24,4 @@ usage example: ./trip_that_video.sh https://www.youtube.com/watch?v=IcQXy4YdFcM 
 
 <h1>To only deepdream one image</h1>
 usage example: python 2_deep_dreamv2.py in_image.jpg out_image.jpg octaves=1 30
-# DeeDee_The_Youtube_Tripper
-# DeeDee_The_Youtube_Tripper
+
