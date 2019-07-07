@@ -7,28 +7,27 @@ download_folder='downloads/'
 name=`echo $2|awk -F '.' '{print $1}'`
 extension='jpg'
 quality=$3
-# rip=$4
 
-# if [[ "${4}" -eq "rip" ]]; then
-	echo "Making folders"
-	mkdir -p ./frames/$name
-	mkdir -p ./processed_frames/$name
-	# delete old video 
-	rm $download_folder$filename
+echo "Making folders"
+mkdir -p ./frames/$name
+mkdir -p ./processed_frames/$name
+# delete old video 
+rm $download_folder$filename
 
-	echo "Ripping Video from Youtube"
-	youtube-dl -f $quality --output $download_folder$filename $rip_url
-# # fi
+echo "Ripping Video from Youtube"
+youtube-dl -f $quality --output $download_folder$filename $rip_url
 
-echo "Splitting to frames"
+echo "Splitting the mp4 file to jpg frames"
 ./1_movie2frames.sh ffmpeg $download_folder$filename ./frames/$name $extension
 
-echo "Tripping the frames(Long Job!)"
+echo "DeepDreaming the frames (This is a long task! Get Cafe!)"
 for file in `ls frames/$name/`; do
-	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 2 10;
+	time python 2_deep_dreamv2.py frames/$name/$file processed_frames/$name/$file 4 10 0;
+	# time python 2_deep_dreamv2.py test_done1.jpg test_done2.jpg 8 10 0
+	# time python DreamOn.py frames/$name/$file processed_frames/$name/$file 6 4 10;
 done
 
-echo "Stitching the frames back to a mp4 with sound of the original"
+echo "Stitching the tripped out jpg frames back to a mp4 with sound of the original"
 ./3_frames2movie.sh ffmpeg processed_frames/$name/ $download_folder$filename $extension
 
 
@@ -44,7 +43,7 @@ echo "Stitching the frames back to a mp4 with sound of the original"
 # 243          webm       640x360    360p  411k , vp9, 25fps, video only, 8.65MiB
 # 134          mp4        640x360    360p  640k , avc1.4d401e, 25fps, video only, 10.43MiB
 # 244          webm       854x480    480p  755k , vp9, 25fps, video only, 14.74MiB
-# 135          mp4        854x480    480p 1183k , avc1.4d401e, 25fps, video only, 19.63MiB
+# 1353          mp4        854x480    480p 1183k , avc1.4d401e, 25fps, video only, 19.63MiB
 # 247          webm       1280x720   720p 1506k , vp9, 25fps, video only, 28.75MiB
 # 136          mp4        1280x720   720p 2036k , avc1.4d401f, 25fps, video only, 36.36MiB
 # 18           mp4        640x360    medium , avc1.42001E, mp4a.40.2@ 96k, 17.51MiB
